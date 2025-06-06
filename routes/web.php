@@ -5,8 +5,9 @@ use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\SettingController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/dashboard');
 });
+
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/dashboard-data', [DashboardController::class, 'getData']);
