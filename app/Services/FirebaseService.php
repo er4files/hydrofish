@@ -36,34 +36,58 @@ class FirebaseService
     }
 
     public function getHistoryData()
-    {
-        $collection = $this->firestore->collection('history');
-        $documents = $collection->documents();
+{
+    $collection = $this->firestore->collection('history');
 
-        $data = [];
+    // Batasi ambil data maksimal 100 dokumen (bisa sesuaikan)
+    $documents = $collection->limit(100)->documents();
 
-        foreach ($documents as $document) {
-            if (!$document->exists()) {
-                continue;
-            }
+    $data = [];
 
-            $docData = $document->data();
+    foreach ($documents as $document) {
+        if (!$document->exists()) {
+            continue;
+        }
 
-            // Cek dan konversi timestamp
-            if (isset($docData['timestamp']) && $docData['timestamp'] instanceof Timestamp) {
-                $docData['timestamp'] = $docData['timestamp']->get()->format('Y-m-d H:i:s');
+        $docData = $document->data();
+
+        // Cek dan konversi timestamp dengan aman
+        if (isset($docData['timestamp'])) {
+            $timestamp = $docData['timestamp'];
+
+            // Bisa jadi sudah DateTimeImmutable, Timestamp, atau string
+            if ($timestamp instanceof \Google\Cloud\Core\Timestamp) {
+                // Ambil DateTime dari Timestamp
+                $dateTime = $timestamp->get();
+                if ($dateTime instanceof \DateTimeInterface) {
+                    $docData['timestamp'] = $dateTime->format('Y-m-d H:i:s');
+                } else {
+                    $docData['timestamp'] = null;
+                }
+            } elseif ($timestamp instanceof \DateTimeInterface) {
+                $docData['timestamp'] = $timestamp->format('Y-m-d H:i:s');
+            } elseif (is_string($timestamp)) {
+                // Coba parsing string timestamp
+                $time = strtotime($timestamp);
+                $docData['timestamp'] = $time ? date('Y-m-d H:i:s', $time) : null;
             } else {
                 $docData['timestamp'] = null;
             }
-
-            $data[] = $docData;
+        } else {
+            $docData['timestamp'] = null;
         }
 
-        // Urutkan berdasarkan timestamp terbaru
-        usort($data, function ($a, $b) {
-            return strtotime($b['timestamp']) <=> strtotime($a['timestamp']);
-        });
-
-        return $data;
+        $data[] = $docData;
     }
+
+    // Urutkan berdasarkan timestamp terbaru, handling jika timestamp null
+    usort($data, function ($a, $b) {
+        $timeA = isset($a['timestamp']) ? strtotime($a['timestamp']) : 0;
+        $timeB = isset($b['timestamp']) ? strtotime($b['timestamp']) : 0;
+        return $timeB <=> $timeA;
+    });
+
+    return $data;
+}
+
 }

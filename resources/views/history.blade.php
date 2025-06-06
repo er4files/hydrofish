@@ -26,7 +26,7 @@
                         <tr>
                             <th>Timestamp</th>
                             <th>TDS (ppm)</th>
-                            <th>Turbidity (NTU)</th>
+                            <th>Turbidity</th>
                             <th>pH Air</th>
                             <th>Suhu Air (°C)</th>
                             <th>Tinggi Air (cm)</th>
