@@ -35,11 +35,11 @@ class FirebaseService
         return $this->database->getReference('jadwal_pakan')->getValue();
     }
 
-    public function getHistoryData()
+   public function getHistoryData()
 {
     $collection = $this->firestore->collection('history');
 
-    // Batasi ambil data maksimal 100 dokumen (bisa sesuaikan)
+    // Batasi ambil data maksimal 100 dokumen (bisa disesuaikan)
     $documents = $collection->limit(100)->documents();
 
     $data = [];
@@ -51,28 +51,20 @@ class FirebaseService
 
         $docData = $document->data();
 
-        // Cek dan konversi timestamp dengan aman
-        if (isset($docData['timestamp'])) {
-            $timestamp = $docData['timestamp'];
+        // Tangani timestamp dengan aman
+        $timestamp = $docData['timestamp'] ?? null;
 
-            // Bisa jadi sudah DateTimeImmutable, Timestamp, atau string
-            if ($timestamp instanceof \Google\Cloud\Core\Timestamp) {
-                // Ambil DateTime dari Timestamp
-                $dateTime = $timestamp->get();
-                if ($dateTime instanceof \DateTimeInterface) {
-                    $docData['timestamp'] = $dateTime->format('Y-m-d H:i:s');
-                } else {
-                    $docData['timestamp'] = null;
-                }
-            } elseif ($timestamp instanceof \DateTimeInterface) {
-                $docData['timestamp'] = $timestamp->format('Y-m-d H:i:s');
-            } elseif (is_string($timestamp)) {
-                // Coba parsing string timestamp
-                $time = strtotime($timestamp);
-                $docData['timestamp'] = $time ? date('Y-m-d H:i:s', $time) : null;
-            } else {
-                $docData['timestamp'] = null;
-            }
+        if ($timestamp instanceof \Google\Cloud\Core\Timestamp) {
+            // Konversi ke DateTime dan format
+            $dateTime = $timestamp->get();
+            $docData['timestamp'] = $dateTime instanceof \DateTimeInterface
+                ? $dateTime->format('Y-m-d H:i:s')
+                : null;
+        } elseif ($timestamp instanceof \DateTimeInterface) {
+            $docData['timestamp'] = $timestamp->format('Y-m-d H:i:s');
+        } elseif (is_string($timestamp)) {
+            $time = strtotime($timestamp);
+            $docData['timestamp'] = $time ? date('Y-m-d H:i:s', $time) : null;
         } else {
             $docData['timestamp'] = null;
         }
@@ -80,7 +72,7 @@ class FirebaseService
         $data[] = $docData;
     }
 
-    // Urutkan berdasarkan timestamp terbaru, handling jika timestamp null
+    // Urutkan berdasarkan timestamp terbaru
     usort($data, function ($a, $b) {
         $timeA = isset($a['timestamp']) ? strtotime($a['timestamp']) : 0;
         $timeB = isset($b['timestamp']) ? strtotime($b['timestamp']) : 0;
@@ -89,5 +81,6 @@ class FirebaseService
 
     return $data;
 }
+
 
 }

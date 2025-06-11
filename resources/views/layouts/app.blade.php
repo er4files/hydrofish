@@ -64,32 +64,6 @@
         @yield('content')
     </div>
 
-    <!-- Script untuk menyimpan data sensor setiap 5 menit -->
-    <script>
-        function saveSensorData() {
-            fetch('/history/store', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log('Data saved:', data);
-            })
-            .catch(err => {
-                console.error('Error saving data:', err);
-            });
-        }
-
-        // Cek apakah interval sudah pernah dibuat
-        if (!window.saveSensorDataInterval) {
-            saveSensorData(); // Panggil langsung saat halaman dibuka
-            window.saveSensorDataInterval = setInterval(saveSensorData, 5 * 60 * 1000); // Setiap 5 menit
-        }
-    </script>
-
     <!-- Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
